@@ -64,6 +64,11 @@ class pos {
 		}
 		else return false;
 	}
+	
+	public String toString()
+	{
+		return this.i + "," + this.j;
+	}
 }
 
 
@@ -157,6 +162,59 @@ public class CratePuzzle {
 			}
 			
 		}
+		else if(Math.abs(start.i-end.i) == 1)
+		{
+		
+			if((Math.abs(start.j-end.j)) <= board[start.i][start.j].height)
+			{
+				canTopple = true;
+				int dir = 1;
+				if(start.j > end.j)
+				{
+					dir = -1;
+				}
+				
+				int h = board[start.i][start.j].height;
+				int j = start.j + dir;
+				while(h > 0)
+				{
+					if( (j < 0) || (j >= 5) || (board[start.i][j].height != -1))
+					{
+						canTopple = false;
+						break;
+					}
+					j = j + dir;
+					h--;
+				}
+				
+			}
+		}
+		else if(Math.abs(start.j-end.j) == 1)
+		{
+			if((Math.abs(start.i-end.i)) <= board[start.i][start.j].height)
+			{
+				canTopple = true;
+				int dir = 1;
+				if(start.i > end.i)
+				{
+					dir = -1;
+				}
+				
+				int h = board[start.i][start.j].height;
+				int i = start.i + dir;
+				while(h > 0)
+				{
+					if((i < 0) || (i >= 5) || (board[i][start.j].height != -1))
+					{
+						canTopple = false;
+						break;
+					}
+					i = i + dir;
+					h--;
+				}
+				
+			}
+		}
 		else return false;
 		
 		return canTopple;
@@ -165,7 +223,7 @@ public class CratePuzzle {
 	public void printPath(pos crtPos)
 	{
 		pos temp = crtPos;
-		
+		System.out.println("path");
 		while(temp!=null)
 		{
 			System.out.println(temp.i + ", " + temp.j);
@@ -176,22 +234,46 @@ public class CratePuzzle {
 	
 	public void solve(Crate[][] board, pos start, ArrayList<pos> ends)
 	{
+		System.out.println("ends");
+		for(pos end: ends)
+		{
+			System.out.println(end);
+		}
+		
+		
+		
 		for(pos end: ends)
 		{
 			ArrayList<pos> newEnds = new ArrayList<pos>();
+			ArrayList<Integer> indicesToRemove = new ArrayList<Integer>();
+			int ind = 0;
 			for(pos cratePos: posList)
 			{
+				/*System.out.println("new " + cratePos);
+				if(end.prev!=null)
+						System.out.println("end " + end.prev);
+				if((end.prev!=null) && (end.prev.equals(cratePos))) continue;*/
 				if(reachable(cratePos, end))
 				{
-					System.out.println("here");
+					System.out.println("checking");
+					System.out.println(cratePos.i + ", " + cratePos.j);
 					pos crtPos = new pos(cratePos.i,cratePos.j);
 					crtPos.prev = end;
-					if(start.equals(crtPos))
+					if((crtPos.i == 3) && (crtPos.j == 4))
 					{
 						printPath(crtPos);
 					}
 					newEnds.add(crtPos);
+					indicesToRemove.add(ind);
+					//System.out.println(newEnds);
 				}
+				ind++;
+			}
+			
+			for(Integer e: indicesToRemove)
+			{
+			//	printPath(posList.get(e.intValue()));
+				posList.remove(e.intValue());
 			}
 			solve(board, start, newEnds);
 			
