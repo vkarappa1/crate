@@ -107,6 +107,16 @@ public class CratePuzzle {
 		posList.add(new pos(1,3));
 		board[3][0].height = 3;
 		posList.add(new pos(3,0));
+		
+		board[3][2].height = 3;
+		posList.add(new pos(3,2));
+		board[3][1].height = 3;
+		posList.add(new pos(3,1));
+		board[3][3].height = 3;
+		posList.add(new pos(3,3));
+		
+		
+		
 		board[3][4].height = 2;
 		posList.add(new pos(3,4));
 		
@@ -120,8 +130,14 @@ public class CratePuzzle {
 		posList.add(new pos(4,4));
 		
 		
+		boolean[] visited = new boolean[posList.size()];
 		
-		solve(board, start, endList, posList);
+		for(int i=0; i<posList.size(); i++)
+		{
+			visited[i] = false;
+		}
+		
+		solve(board, start, endList, posList, visited);
 		
 	}
 	
@@ -133,6 +149,9 @@ public class CratePuzzle {
 		boolean canTopple = false;
 		if(start.j == end.j)
 		{
+			if (((start.i == end.i + 1) || (start.i + 1 == end.i)) && (board[start.i][start.j].height > 0))
+					return true;
+			
 			if((Math.abs(start.i-end.i)-1) == board[start.i][start.j].height)
 			{
 				canTopple = true;
@@ -148,6 +167,10 @@ public class CratePuzzle {
 		}
 		else if(start.i == end.i)
 		{
+			
+			if (((start.j == end.j + 1) || (start.j + 1 == end.j)) && (board[start.i][start.j].height > 0))
+				return true;
+			
 			if((Math.abs(start.j-end.j)-1) == board[start.i][start.j].height)
 			{
 				canTopple = true;
@@ -191,7 +214,6 @@ public class CratePuzzle {
 		}
 		else if(Math.abs(start.j-end.j) == 1)
 		{
-			System.out.println("here");
 			if((Math.abs(start.i-end.i)) <= board[start.i][start.j].height)
 			{
 				canTopple = true;
@@ -218,10 +240,7 @@ public class CratePuzzle {
 		}
 		else return false;
 		
-		System.out.println("Start:" + start);
-		System.out.println("End:" + end);
-		System.out.println("cantopple" +  canTopple);
-		
+	
 		return canTopple;
 	}
 	
@@ -237,29 +256,22 @@ public class CratePuzzle {
 		
 	}
 	
-	public void solve(Crate[][] board, pos start, ArrayList<pos> ends, ArrayList<pos> posList)
+	public void solve(Crate[][] board, pos start, ArrayList<pos> ends, ArrayList<pos> posList, boolean[] visited)
 	{
-		System.out.println("ends");
-		for(pos end: ends)
-		{
-			System.out.println(end);
-		}
-		
 		
 		
 		for(pos end: ends)
 		{
 			ArrayList<pos> newEnds = new ArrayList<pos>();
 			ArrayList<Integer> indicesToRemove = new ArrayList<Integer>();
-			ArrayList<pos> temp = new ArrayList<pos>();
+			
 			
 			for(int ind =0; ind < posList.size(); ind++)
 			{
+				if(visited[ind]) continue;
 				pos cratePos = posList.get(ind);
 				if(reachable(cratePos, end))
 				{
-					//System.out.println("checking");
-					//System.out.println(cratePos.i + ", " + cratePos.j);
 					pos crtPos = new pos(cratePos.i,cratePos.j);
 					crtPos.prev = end;
 					if((crtPos.i == 3) && (crtPos.j == 0))
@@ -268,19 +280,15 @@ public class CratePuzzle {
 					}
 					newEnds.add(crtPos);
 					indicesToRemove.add(ind);
-					temp.add(cratePos);
-					//System.out.println(newEnds);
+					visited[ind] = true;
 				}
-				//ind++;
 			}
 			
-			
+			solve(board, start, newEnds, posList, visited);
 			for(Integer e: indicesToRemove)
 			{
-				posList.remove(e.intValue());
+				visited[e.intValue()] = false; 
 			}
-			solve(board, start, newEnds, posList);
-			posList.addAll(temp);
 			
 		}
 		
