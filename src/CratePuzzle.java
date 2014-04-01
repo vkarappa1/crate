@@ -105,9 +105,9 @@ public class CratePuzzle {
 		posList.add(new pos(0,1));
 		board[1][3].height = 2;
 		posList.add(new pos(1,3));
-		board[2][0].height = 4;
-		posList.add(new pos(2,0));
-		board[3][4].height = 4;
+		board[3][0].height = 3;
+		posList.add(new pos(3,0));
+		board[3][4].height = 2;
 		posList.add(new pos(3,4));
 		
 		start = new pos(3,4);
@@ -121,7 +121,7 @@ public class CratePuzzle {
 		
 		
 		
-		solve(board, start, endList);
+		solve(board, start, endList, posList);
 		
 	}
 	
@@ -191,6 +191,7 @@ public class CratePuzzle {
 		}
 		else if(Math.abs(start.j-end.j) == 1)
 		{
+			System.out.println("here");
 			if((Math.abs(start.i-end.i)) <= board[start.i][start.j].height)
 			{
 				canTopple = true;
@@ -217,6 +218,10 @@ public class CratePuzzle {
 		}
 		else return false;
 		
+		System.out.println("Start:" + start);
+		System.out.println("End:" + end);
+		System.out.println("cantopple" +  canTopple);
+		
 		return canTopple;
 	}
 	
@@ -232,7 +237,7 @@ public class CratePuzzle {
 		
 	}
 	
-	public void solve(Crate[][] board, pos start, ArrayList<pos> ends)
+	public void solve(Crate[][] board, pos start, ArrayList<pos> ends, ArrayList<pos> posList)
 	{
 		System.out.println("ends");
 		for(pos end: ends)
@@ -246,36 +251,36 @@ public class CratePuzzle {
 		{
 			ArrayList<pos> newEnds = new ArrayList<pos>();
 			ArrayList<Integer> indicesToRemove = new ArrayList<Integer>();
-			int ind = 0;
-			for(pos cratePos: posList)
+			ArrayList<pos> temp = new ArrayList<pos>();
+			
+			for(int ind =0; ind < posList.size(); ind++)
 			{
-				/*System.out.println("new " + cratePos);
-				if(end.prev!=null)
-						System.out.println("end " + end.prev);
-				if((end.prev!=null) && (end.prev.equals(cratePos))) continue;*/
+				pos cratePos = posList.get(ind);
 				if(reachable(cratePos, end))
 				{
-					System.out.println("checking");
-					System.out.println(cratePos.i + ", " + cratePos.j);
+					//System.out.println("checking");
+					//System.out.println(cratePos.i + ", " + cratePos.j);
 					pos crtPos = new pos(cratePos.i,cratePos.j);
 					crtPos.prev = end;
-					if((crtPos.i == 3) && (crtPos.j == 4))
+					if((crtPos.i == 3) && (crtPos.j == 0))
 					{
 						printPath(crtPos);
 					}
 					newEnds.add(crtPos);
 					indicesToRemove.add(ind);
+					temp.add(cratePos);
 					//System.out.println(newEnds);
 				}
-				ind++;
+				//ind++;
 			}
+			
 			
 			for(Integer e: indicesToRemove)
 			{
-			//	printPath(posList.get(e.intValue()));
 				posList.remove(e.intValue());
 			}
-			solve(board, start, newEnds);
+			solve(board, start, newEnds, posList);
+			posList.addAll(temp);
 			
 		}
 		
