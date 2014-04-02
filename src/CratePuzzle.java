@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -39,11 +40,13 @@ class pos {
 	int i;
 	int j;
 	public pos prev;
+	int direction;
 	pos(int i, int j)
 	{
 		prev = null;
 		this.i = i;
 		this.j = j;
+		this.direction = -1;
 	}
 	
 	public void right()
@@ -78,7 +81,7 @@ class pos {
 	
 	public String toString()
 	{
-		return this.i + "," + this.j;
+		return this.i + "," + this.j + "," + this.direction;
 	}
 }
 
@@ -91,26 +94,69 @@ public class CratePuzzle {
 	ArrayList<pos> endList = new ArrayList<pos>();
 	Crate[][] board;
 	
-	CratePuzzle()
+	CratePuzzle(JSONObject boardData)
 	{
-		board = new Crate[5][5];
 		
-		for(int i=0; i<5; i++)
+		JSONArray boardSize = (JSONArray)boardData.get("board");
+		
+		
+		board = new Crate[Integer.parseInt(boardSize.get(0).toString())][Integer.parseInt(boardSize.get(1).toString())];
+		
+		for(int i=0; i<board.length; i++)
 		{
-			for(int j=0; j<5; j++)
+			for(int j=0; j<board[0].length; j++)
 			{
 				board[i][j] = new Crate();
 			}
 		}
 		
+		JSONArray st = (JSONArray)boardData.get("start");
+		pos start = new pos(Integer.parseInt(st.get(0).toString()), Integer.parseInt(st.get(1).toString()));
 		
-		pos sz = new pos(5, 5);
-		pos start = new pos(3, 4);
-		pos end = new pos(0,4);
+		
+		JSONArray ed = (JSONArray)boardData.get("end");
+		pos end = new pos(Integer.parseInt(ed.get(0).toString()),Integer.parseInt(ed.get(1).toString()));
 		
 		endList.add(end);
 		
-		board[3][4].start = true;
+		
+		JSONArray standing_crates = (JSONArray)boardData.get("standing_crates");
+		for(int i=0; i<standing_crates.size(); i++)
+		{
+			JSONArray sCrate = (JSONArray)standing_crates.get(i);
+			pos p = new pos(Integer.parseInt(sCrate.get(0).toString()),Integer.parseInt(sCrate.get(1).toString()));
+			board[p.i][p.j].height = Integer.parseInt(sCrate.get(2).toString());
+			posList.add(p);
+		}
+		
+		
+		JSONArray toppled_crates  = (JSONArray)boardData.get("toppled_crates");
+		for(int k=0; k<toppled_crates.size(); k++)
+		{
+			JSONArray tCrate = (JSONArray)toppled_crates.get(k);
+			pos s = new pos(Integer.parseInt(tCrate.get(0).toString()),Integer.parseInt(tCrate.get(1).toString())); 
+			pos e = new pos(Integer.parseInt(tCrate.get(2).toString()),Integer.parseInt(tCrate.get(3).toString()));
+			
+			if(s.i == e.i)
+			{
+				for(int j=Math.min(s.j, e.j); j<=Math.max(s.j, e.j); j++)
+				{
+					board[s.i][j].height = 1;
+					posList.add(new pos(s.i,j));
+				}
+			}
+			else if(s.j == e.j)
+			{
+				for(int i=Math.min(s.i, e.i); i<=Math.max(s.i, e.i); i++)
+				{
+					board[i][s.j].height = 1;
+					posList.add(new pos(i,s.j));
+				}
+			}
+		}
+		
+		
+	/*	board[3][4].start = true;
 		board[0][4].end = true;
 		board[0][1].height = 2;
 		posList.add(new pos(0,1));
@@ -138,7 +184,7 @@ public class CratePuzzle {
 		board[4][3].height = 0;
 		board[4][4].height = 0;
 		posList.add(new pos(4,3));
-		posList.add(new pos(4,4));
+		posList.add(new pos(4,4));*/
 		
 		
 		boolean[] visited = new boolean[posList.size()];
@@ -147,6 +193,22 @@ public class CratePuzzle {
 		{
 			visited[i] = false;
 		}
+	
+		/*System.out.println(start);
+		System.out.println(end);
+		
+		
+		
+		for(int i=0; i<board.length; i++)
+		{
+			for(int j=0; j<board[0].length; j++)
+			{
+				System.out.print(board[i][j].height + " ");
+			}
+			System.out.println();
+		}*/
+		
+		
 		
 		solve(board, start, endList, posList, visited);
 		
@@ -155,7 +217,7 @@ public class CratePuzzle {
 	
 	
 	
-	public boolean reachable(pos start, pos end)
+	public boolean reachable(pos start, pos end, Integer direction)
 	{
 		boolean canTopple = false;
 		if(start.j == end.j)
@@ -166,6 +228,9 @@ public class CratePuzzle {
 			if((Math.abs(start.i-end.i)-1) == board[start.i][start.j].height)
 			{
 				canTopple = true;
+				direction = start.i > end.i? 2: 3;
+				
+				start.direction = direction;
 				for(int i= Math.min(start.i, end.i) + 1; i<Math.max(start.i, end.i); i++)
 				{
 					if(board[i][end.j].height != -1)
@@ -185,6 +250,9 @@ public class CratePuzzle {
 			if((Math.abs(start.j-end.j)-1) == board[start.i][start.j].height)
 			{
 				canTopple = true;
+				direction = start.j > end.j? 0: 1;
+				start.direction = direction;
+				
 				for(int j= Math.min(start.j, end.j) + 1; j<Math.max(start.j, end.j); j++)
 				{
 					if(board[end.i][j].height != -1)
@@ -206,13 +274,16 @@ public class CratePuzzle {
 				if(start.j > end.j)
 				{
 					dir = -1;
+					direction = 0;
 				}
+				else direction = 1;
 				
+				start.direction = direction;
 				int h = board[start.i][start.j].height;
 				int j = start.j + dir;
 				while(h > 0)
 				{
-					if( (j < 0) || (j >= 5) || (board[start.i][j].height != -1))
+					if( (j < 0) || (j >= board[0].length) || (board[start.i][j].height != -1))
 					{
 						canTopple = false;
 						break;
@@ -232,13 +303,19 @@ public class CratePuzzle {
 				if(start.i > end.i)
 				{
 					dir = -1;
+					direction = 3;
+				}
+				else
+				{
+					direction = 2;
 				}
 				
+				start.direction = direction;
 				int h = board[start.i][start.j].height;
 				int i = start.i + dir;
 				while(h > 0)
 				{
-					if((i < 0) || (i >= 5) || (board[i][start.j].height != -1))
+					if((i < 0) || (i >= board[0].length) || (board[i][start.j].height != -1))
 					{
 						canTopple = false;
 						break;
@@ -261,7 +338,7 @@ public class CratePuzzle {
 		System.out.println("path");
 		while(temp!=null)
 		{
-			System.out.println(temp.i + ", " + temp.j);
+			System.out.println(temp.i + ", " + temp.j + ", " +  temp.direction);
 			temp = temp.prev;
 		}
 		
@@ -270,7 +347,12 @@ public class CratePuzzle {
 	public void solve(Crate[][] board, pos start, ArrayList<pos> ends, ArrayList<pos> posList, boolean[] visited)
 	{
 		
-		
+		System.out.println("ends");
+		for(pos end: ends)
+		{
+			System.out.println(end);
+		}
+
 		for(pos end: ends)
 		{
 			ArrayList<pos> newEnds = new ArrayList<pos>();
@@ -281,11 +363,15 @@ public class CratePuzzle {
 			{
 				if(visited[ind]) continue;
 				pos cratePos = posList.get(ind);
-				if(reachable(cratePos, end))
+				Integer dir = new Integer(-1);
+				if(reachable(cratePos, end, dir))
 				{
 					pos crtPos = new pos(cratePos.i,cratePos.j);
+					
+					crtPos.direction = cratePos.direction;
 					crtPos.prev = end;
-					if((crtPos.i == 3) && (crtPos.j == 0))
+					System.out.println(end.direction);
+					if((crtPos.i == start.i) && (crtPos.j == start.j))
 					{
 						printPath(crtPos);
 					}
@@ -305,7 +391,7 @@ public class CratePuzzle {
 		
 	}
 	
-	String readFile(String path, Charset encoding) throws IOException 
+	public static String readFile(String path, Charset encoding) throws IOException 
 	{
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return encoding.decode(ByteBuffer.wrap(encoded)).toString();
@@ -313,25 +399,21 @@ public class CratePuzzle {
 	
 	public static void main(String args[]) throws IOException
 	{
-		CratePuzzle cp = new CratePuzzle();
-		String str = cp.readFile("C:\\workspace2\\crate\\bin\\questions.json", Charset.defaultCharset());
+		
+		String str = readFile("C:\\workspace2\\crate\\bin\\questions.json", Charset.defaultCharset());
 		System.out.println(str);
 		
 		Object obj=JSONValue.parse(str);
 		JSONArray array=(JSONArray)obj;
 		
-		System.out.println(array.size());
+		//System.out.println(array.size());
 		
 		for(int i=0; i<array.size(); i++)
 		{
 			JSONObject o = (JSONObject)array.get(i);
-			System.out.println(o.get("board"));
-			System.out.println(o.get("standing_crates"));
-			System.out.println(o.get("toppled_crates"));
-			System.out.println(o.get("start"));
+			CratePuzzle cp = new CratePuzzle(o);
 		}
 
-		
 	}
 	
 	
