@@ -1,3 +1,5 @@
+package puzzle;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -13,91 +15,16 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
-
-class Crate {
-	
-	
-	public int height;
-	public boolean start;
-	public boolean end;
-	
-	Crate()
-	{
-		height = -1;
-		start = false;
-		end = false;
-	}
-	
-	Crate(int h, boolean s, boolean e)
-	{
-		this.height = h;
-		this.start = s;
-		this.end = e;
-	}
-}
-
-class pos {
-	
-	int i;
-	int j;
-	public pos prev;
-	int direction;
-	pos(int i, int j)
-	{
-		prev = null;
-		this.i = i;
-		this.j = j;
-		this.direction = -1;
-	}
-	
-	public void right()
-	{
-		this.j = this.j + 1;
-	}
-	
-	public void left()
-	{
-		this.j = this.j - 1;
-	}
-	
-	public void up()
-	{
-		this.i = this.i - 1;
-	}
-	
-	public void down()
-	{
-		
-		this.i = this.i + 1;
-	}
-
-	public boolean equals(pos temp)
-	{
-		if((this.i == temp.i) && (this.i == temp.j))
-		{
-			return true;
-		}
-		else return false;
-	}
-	
-	public String toString()
-	{
-		return this.i + "," + this.j + "," + this.direction;
-	}
-}
-
-
-
 public class CratePuzzle {
 
 	
-	ArrayList<pos> posList = new ArrayList<pos>();
+	ArrayList<pos> posList = new ArrayList<pos>();  // list of positions where crates are located
 	ArrayList<pos> endList = new ArrayList<pos>();
 	JSONArray outputArr = new JSONArray();
 	JSONArray toppled_crates;
 	JSONArray standing_crates;
 	Crate[][] board;
-	pos start,end;
+	pos start,end; 
 	
 	CratePuzzle(JSONObject boardData, String filePath)
 	{
@@ -140,6 +67,7 @@ public class CratePuzzle {
 			pos s = new pos(Integer.parseInt(tCrate.get(0).toString()),Integer.parseInt(tCrate.get(1).toString())); 
 			pos e = new pos(Integer.parseInt(tCrate.get(2).toString()),Integer.parseInt(tCrate.get(3).toString()));
 			
+			// running through all the toppled crates and saving their positions
 			if(s.i == e.i)
 			{
 				for(int j=Math.min(s.j, e.j); j<=Math.max(s.j, e.j); j++)
@@ -158,6 +86,7 @@ public class CratePuzzle {
 			}
 		}
 	
+		//This array keeps track of the visited crates
 		boolean[] visited = new boolean[posList.size()];
 		
 		for(int i=0; i<posList.size(); i++)
@@ -165,6 +94,7 @@ public class CratePuzzle {
 			visited[i] = false;
 		}
 		
+		//Find all paths from start to end
 		solve(board, start, endList, posList, visited);
 		
 		try{
@@ -180,6 +110,16 @@ public class CratePuzzle {
 		
 	}
 
+	/*
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
+	
 	public boolean reachable(Crate[][] board, pos start, pos end, Integer direction)
 	{
 		boolean canTopple = false;
@@ -296,6 +236,13 @@ public class CratePuzzle {
 		return canTopple;
 	}
 	
+	
+	/*
+	 * As we start from the end and find all reachable crate positions. Then these positions become the new ends.
+	 * That's why this funciton helps to find the path when we reach the start. Every pos object contains a reference to the previous 
+	 * end.
+	 *  
+	 */
 	public void printPath(pos crtPos, boolean[] visited)
 	{
 		pos temp = crtPos;
@@ -310,13 +257,15 @@ public class CratePuzzle {
 		standing_crates_now.addAll(standing_crates);
 		JSONArray toppled = new JSONArray();
 		
-		while(temp.prev!=null)
+		while(temp.prev!=null) //find the path till we reach end
 		{
 			System.out.println(temp.i + ", " + temp.j + ", " +  temp.direction);
 			JSONArray list = new JSONArray();
 			int start_row, start_column, end_row, end_column;
 			
 			int toremove= -1;
+			
+			/// find out which of the crates are toppled.
 			for(int i=0; i<standing_crates_now.size(); i++)
 			{
 				JSONArray st = (JSONArray)standing_crates_now.get(i);
@@ -335,6 +284,7 @@ public class CratePuzzle {
 			end_row = temp.i;
 			end_column = temp.j;
 			
+			///figuring out which way the crates are toppled.
 			switch(temp.direction)
 			{
 				case 0: end_column = start_column - 1;
@@ -364,33 +314,54 @@ public class CratePuzzle {
 		toppled.addAll(toppled_crates);
 		obj.put("toppled_crates", toppled);
 		outputArr.add(obj);
-		
-		
+
 	}
 	
+	
+	/*
+	 * 
+	 * We solve the path problem by starting from the end. We find reachable nodes from the end and those become new ends.
+	 * Then again we do the same for new ends again until we find a reachable start position. Once we hit the start we would print out the path.
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
 	public void solve(Crate[][] board, pos start, ArrayList<pos> ends, ArrayList<pos> posList, boolean[] visited)
 	{
+		
+		/*
+		 * for each end, find reachable crate piles 
+		 */
 		for(pos end: ends)
 		{
 			ArrayList<pos> newEnds = new ArrayList<pos>();
 			ArrayList<Integer> indicesToRemove = new ArrayList<Integer>();
-			//Crate[][] newBoard = topple(board,end,end.direction);
+			
 			
 			for(int ind =0; ind < posList.size(); ind++)
 			{
 				if(visited[ind]) continue;
 				pos cratePos = posList.get(ind);
 				Integer dir = new Integer(-1);
+				
+				/*
+				 * 
+				 * find if the crate pile can be toppled in such way that we reach current end.
+				 * If yes add it to new ends.
+				 * 
+				 */
+				
 				if(reachable(board, cratePos, end, dir))
 				{
+					
+					
 					pos crtPos = new pos(cratePos.i,cratePos.j);
 					
 					crtPos.direction = cratePos.direction;
 					crtPos.prev = end;
-					//System.out.println(end.direction);
 					
-			
-					
+					// if reach start position we have got a solution
 					if((crtPos.i == start.i) && (crtPos.j == start.j))
 					{
 						printPath(crtPos, visited);
@@ -401,12 +372,14 @@ public class CratePuzzle {
 				}
 			}
 			
+			// solve with new ends which are reachable from the current end.
 			solve(board, start, newEnds, posList, visited);
+			
 			for(Integer e: indicesToRemove)
 			{
 				visited[e.intValue()] = false; 
 			}
-		//	newBoard = board;
+	
 		}
 		
 	}
@@ -461,8 +434,6 @@ public class CratePuzzle {
 		
 	}
 
-	
-	
 	public static void main(String args[]) throws IOException
 	{
 		
