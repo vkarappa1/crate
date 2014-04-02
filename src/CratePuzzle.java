@@ -154,61 +154,13 @@ public class CratePuzzle {
 				}
 			}
 		}
-		
-		
-	/*	board[3][4].start = true;
-		board[0][4].end = true;
-		board[0][1].height = 2;
-		posList.add(new pos(0,1));
-		board[1][3].height = 2;
-		posList.add(new pos(1,3));
-		board[3][0].height = 3;
-		posList.add(new pos(3,0));
-		
-		board[3][2].height = 3;
-		posList.add(new pos(3,2));
-		board[3][1].height = 3;
-		posList.add(new pos(3,1));
-		board[3][3].height = 3;
-		posList.add(new pos(3,3));
-		
-		
-		
-		board[3][4].height = 2;
-		posList.add(new pos(3,4));
-		
-		start = new pos(3,4);
-		end = new pos(0,4);
-		
-		//toppled crates
-		board[4][3].height = 0;
-		board[4][4].height = 0;
-		posList.add(new pos(4,3));
-		posList.add(new pos(4,4));*/
-		
-		
+	
 		boolean[] visited = new boolean[posList.size()];
 		
 		for(int i=0; i<posList.size(); i++)
 		{
 			visited[i] = false;
 		}
-	
-		/*System.out.println(start);
-		System.out.println(end);
-		
-		
-		
-		for(int i=0; i<board.length; i++)
-		{
-			for(int j=0; j<board[0].length; j++)
-			{
-				System.out.print(board[i][j].height + " ");
-			}
-			System.out.println();
-		}*/
-		
-		
 		
 		solve(board, start, endList, posList, visited);
 		
