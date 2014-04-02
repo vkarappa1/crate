@@ -180,15 +180,16 @@ public class CratePuzzle {
 		
 	}
 
-	public boolean reachable(pos start, pos end, Integer direction)
+	public boolean reachable(Crate[][] board, pos start, pos end, Integer direction)
 	{
 		boolean canTopple = false;
+		
 		if(start.j == end.j)
 		{
 			if (((start.i == end.i + 1) || (start.i + 1 == end.i)) && (board[start.i][start.j].height > 0))
 					return true;
 			
-			if((Math.abs(start.i-end.i)-1) == board[start.i][start.j].height)
+			if(((Math.abs(start.i-end.i)-1) == board[start.i][start.j].height) && (board[start.i][start.j].height > 1))
 			{
 				canTopple = true;
 				direction = start.i > end.i? 2: 3;
@@ -210,7 +211,7 @@ public class CratePuzzle {
 			if (((start.j == end.j + 1) || (start.j + 1 == end.j)) && (board[start.i][start.j].height > 0))
 				return true;
 			
-			if((Math.abs(start.j-end.j)-1) == board[start.i][start.j].height)
+			if(((Math.abs(start.j-end.j)-1) == board[start.i][start.j].height) && (board[start.i][start.j].height > 1))
 			{
 				canTopple = true;
 				direction = start.j > end.j? 0: 1;
@@ -230,7 +231,7 @@ public class CratePuzzle {
 		else if(Math.abs(start.i-end.i) == 1)
 		{
 		
-			if((Math.abs(start.j-end.j)) <= board[start.i][start.j].height)
+			if(((Math.abs(start.j-end.j)) <= board[start.i][start.j].height) && (board[start.i][start.j].height > 1))
 			{
 				canTopple = true;
 				int dir = 1;
@@ -259,7 +260,7 @@ public class CratePuzzle {
 		}
 		else if(Math.abs(start.j-end.j) == 1)
 		{
-			if((Math.abs(start.i-end.i)) <= board[start.i][start.j].height)
+			if(((Math.abs(start.i-end.i)) <= board[start.i][start.j].height) && (board[start.i][start.j].height > 1))
 			{
 				canTopple = true;
 				int dir = 1;
@@ -307,25 +308,6 @@ public class CratePuzzle {
 		
 		JSONArray standing_crates_now = new JSONArray();
 		standing_crates_now.addAll(standing_crates);
-		
-		/*for(int i=0; i<visited.length; i++)
-		{
-			pos loc = posList.get(i);
-			System.out.println(visited[i] + "," + loc.i + "," + loc.j);
-			if((!visited[i]) && !((loc.i ==start.i) && (loc.j==start.j)))
-			{
-				if(board[loc.i][loc.j].height > 1)
-				{
-					JSONArray arr = new JSONArray();
-					arr.add(loc.i);
-					arr.add(loc.j);
-					arr.add(board[loc.i][loc.j].height);
-					standing_crates.add(arr);
-				}	
-			}
-			
-		}*/
-	
 		JSONArray toppled = new JSONArray();
 		
 		while(temp.prev!=null)
@@ -388,31 +370,27 @@ public class CratePuzzle {
 	
 	public void solve(Crate[][] board, pos start, ArrayList<pos> ends, ArrayList<pos> posList, boolean[] visited)
 	{
-		
-		System.out.println("ends");
-		for(pos end: ends)
-		{
-			System.out.println(end);
-		}
-
 		for(pos end: ends)
 		{
 			ArrayList<pos> newEnds = new ArrayList<pos>();
 			ArrayList<Integer> indicesToRemove = new ArrayList<Integer>();
-			
+			//Crate[][] newBoard = topple(board,end,end.direction);
 			
 			for(int ind =0; ind < posList.size(); ind++)
 			{
 				if(visited[ind]) continue;
 				pos cratePos = posList.get(ind);
 				Integer dir = new Integer(-1);
-				if(reachable(cratePos, end, dir))
+				if(reachable(board, cratePos, end, dir))
 				{
 					pos crtPos = new pos(cratePos.i,cratePos.j);
 					
 					crtPos.direction = cratePos.direction;
 					crtPos.prev = end;
-					System.out.println(end.direction);
+					//System.out.println(end.direction);
+					
+			
+					
 					if((crtPos.i == start.i) && (crtPos.j == start.j))
 					{
 						printPath(crtPos, visited);
@@ -428,7 +406,7 @@ public class CratePuzzle {
 			{
 				visited[e.intValue()] = false; 
 			}
-			
+		//	newBoard = board;
 		}
 		
 	}
@@ -438,6 +416,52 @@ public class CratePuzzle {
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return encoding.decode(ByteBuffer.wrap(encoded)).toString();
 	}
+	
+	public Crate[][] topple(Crate[][] board, pos cur, int direction)
+	{
+		Crate[][] temp = new Crate[board.length][board[0].length];
+		
+		for(int i=0; i<board.length; i++)
+		{
+			for(int j=0; j<board[0].length; j++)
+			{
+				temp[i][j] = board[i][j];
+			}
+		}
+		
+		temp[cur.i][cur.j].height = -1;
+		switch(direction)
+		{
+			case 1:for(int j=cur.j+1; j<board[0].length; j++)
+				   {
+						temp[cur.i][j].height = 1;
+					}
+					break;
+				
+			case 0:for(int j=cur.j-1; j> -1; j--)
+				   {
+						temp[cur.i][j].height = 1;
+				   }
+				   break;
+
+			case 3:for(int i=cur.i+1; i<board[0].length; i++)
+			   	   {
+						temp[i][cur.j].height = 1;
+			   	   }
+			   	   break;
+			   	   
+			case 2:for(int i=cur.i-1; i > -1; i--)
+		   	   	   {
+					 	temp[i][cur.j].height = 1;
+		   	   	   }
+		   	   	   break;
+		}
+		
+		return temp;
+		
+	}
+
+	
 	
 	public static void main(String args[]) throws IOException
 	{
@@ -456,51 +480,6 @@ public class CratePuzzle {
 			CratePuzzle cp = new CratePuzzle(o, "C:\\workspace2\\crate\\bin\\board" + i + "_solution.json");
 		}
 
-	}
-	
-	
-	public Crate[][] topple(Crate[][] board, pos cur, int direction)
-	{
-		Crate[][] temp = new Crate[5][5];
-		
-		for(int i=0; i<5; i++)
-		{
-			for(int j=0; j<5; j++)
-			{
-				temp[i][j] = board[i][j];
-			}
-		}
-		
-		temp[cur.i][cur.j].height = -1;
-		switch(direction)
-		{
-			case 0:for(int j=cur.j+1; j<5; j++)
-				   {
-						temp[cur.i][j].height = 0;
-					}
-					break;
-				
-			case 1:for(int j=cur.j-1; j> -1; j--)
-				   {
-						temp[cur.i][j].height = 0;
-				   }
-				   break;
-
-			case 2:for(int i=cur.i+1; i<5; i++)
-			   	   {
-						temp[i][cur.j].height = 0;
-			   	   }
-			   	   break;
-			   	   
-			case 3:for(int i=cur.i-1; i > -1; i--)
-		   	   	   {
-					 	temp[i][cur.j].height = 0;
-		   	   	   }
-		   	   	   break;
-		}
-		
-		return temp;
-		
 	}
 
 }
