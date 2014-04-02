@@ -1,4 +1,15 @@
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.ArrayList;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
 
 
 class Crate {
@@ -294,10 +305,33 @@ public class CratePuzzle {
 		
 	}
 	
+	String readFile(String path, Charset encoding) throws IOException 
+	{
+		byte[] encoded = Files.readAllBytes(Paths.get(path));
+		return encoding.decode(ByteBuffer.wrap(encoded)).toString();
+	}
 	
-	public static void main(String args[])
+	public static void main(String args[]) throws IOException
 	{
 		CratePuzzle cp = new CratePuzzle();
+		String str = cp.readFile("C:\\workspace2\\crate\\bin\\questions.json", Charset.defaultCharset());
+		System.out.println(str);
+		
+		Object obj=JSONValue.parse(str);
+		JSONArray array=(JSONArray)obj;
+		
+		System.out.println(array.size());
+		
+		for(int i=0; i<array.size(); i++)
+		{
+			JSONObject o = (JSONObject)array.get(i);
+			System.out.println(o.get("board"));
+			System.out.println(o.get("standing_crates"));
+			System.out.println(o.get("toppled_crates"));
+			System.out.println(o.get("start"));
+		}
+
+		
 	}
 	
 	
