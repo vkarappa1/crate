@@ -93,6 +93,7 @@ public class CratePuzzle {
 	
 	ArrayList<pos> posList = new ArrayList<pos>();
 	ArrayList<pos> endList = new ArrayList<pos>();
+	JSONArray outputArr = new JSONArray();
 	Crate[][] board;
 	
 	CratePuzzle(JSONObject boardData)
@@ -211,11 +212,18 @@ public class CratePuzzle {
 		
 		solve(board, start, endList, posList, visited);
 		
+		try{
+			FileWriter file = new FileWriter("B:\\test.json");
+			file.write(outputArr.toJSONString());
+			file.flush();
+			file.close();
+	 
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
-	
-	
-	
-	
+
 	public boolean reachable(pos start, pos end, Integer direction)
 	{
 		boolean canTopple = false;
@@ -302,11 +310,11 @@ public class CratePuzzle {
 				if(start.i > end.i)
 				{
 					dir = -1;
-					direction = 3;
+					direction = 2;
 				}
 				else
 				{
-					direction = 2;
+					direction = 3;
 				}
 				
 				start.direction = direction;
@@ -352,13 +360,14 @@ public class CratePuzzle {
 				arr.add(loc.j);
 				arr.add(board[loc.i][loc.j].height);
 				standing_crates.add(arr);
+				
 			}
 			
 		}
 		obj.put("standing_crates", standing_crates);
 		JSONArray toppled = new JSONArray();
 		
-		while(temp!=null)
+		while(temp.prev!=null)
 		{
 			System.out.println(temp.i + ", " + temp.j + ", " +  temp.direction);
 			JSONArray list = new JSONArray();
@@ -382,7 +391,6 @@ public class CratePuzzle {
 						break;
 				case 3: end_row = start_row + board[start_row][start_column].height;
 						start_row = start_row + 1;
-			
 			}
 			
 			list.add(start_row);
@@ -395,17 +403,8 @@ public class CratePuzzle {
 		}
 		
 		obj.put("toppled_crates", toppled);
+		outputArr.add(obj);
 		
-
-		try{
-			FileWriter file = new FileWriter("B:\\test.json");
-			file.write(obj.toJSONString());
-			file.flush();
-			file.close();
-	 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		
 	}
 	
