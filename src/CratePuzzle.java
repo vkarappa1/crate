@@ -94,9 +94,12 @@ public class CratePuzzle {
 	ArrayList<pos> posList = new ArrayList<pos>();
 	ArrayList<pos> endList = new ArrayList<pos>();
 	JSONArray outputArr = new JSONArray();
+	JSONArray toppled_crates;
+	JSONArray standing_crates;
 	Crate[][] board;
+	pos start,end;
 	
-	CratePuzzle(JSONObject boardData)
+	CratePuzzle(JSONObject boardData, String filePath)
 	{
 		
 		JSONArray boardSize = (JSONArray)boardData.get("board");
@@ -111,16 +114,16 @@ public class CratePuzzle {
 		}
 		
 		JSONArray st = (JSONArray)boardData.get("start");
-		pos start = new pos(Integer.parseInt(st.get(0).toString()), Integer.parseInt(st.get(1).toString()));
+		start = new pos(Integer.parseInt(st.get(0).toString()), Integer.parseInt(st.get(1).toString()));
 		
 		
 		JSONArray ed = (JSONArray)boardData.get("end");
-		pos end = new pos(Integer.parseInt(ed.get(0).toString()),Integer.parseInt(ed.get(1).toString()));
+		end = new pos(Integer.parseInt(ed.get(0).toString()),Integer.parseInt(ed.get(1).toString()));
 		
 		endList.add(end);
 		
 		
-		JSONArray standing_crates = (JSONArray)boardData.get("standing_crates");
+		standing_crates = (JSONArray)boardData.get("standing_crates");
 		for(int i=0; i<standing_crates.size(); i++)
 		{
 			JSONArray sCrate = (JSONArray)standing_crates.get(i);
@@ -130,7 +133,7 @@ public class CratePuzzle {
 		}
 		
 		
-		JSONArray toppled_crates  = (JSONArray)boardData.get("toppled_crates");
+		toppled_crates  = (JSONArray)boardData.get("toppled_crates");
 		for(int k=0; k<toppled_crates.size(); k++)
 		{
 			JSONArray tCrate = (JSONArray)toppled_crates.get(k);
@@ -165,7 +168,8 @@ public class CratePuzzle {
 		solve(board, start, endList, posList, visited);
 		
 		try{
-			FileWriter file = new FileWriter("B:\\test.json");
+			//FileWriter file = new FileWriter("C:\\workspace2\\crate\\bin\\test.json");
+			FileWriter file = new FileWriter(filePath);
 			file.write(outputArr.toJSONString());
 			file.flush();
 			file.close();
@@ -301,22 +305,27 @@ public class CratePuzzle {
 		size.add(board[0].length);
 		obj.put("board", size);
 		
-		JSONArray standing_crates = new JSONArray();
-		for(int i=0; i<visited.length; i++)
+		JSONArray standing_crates_now = new JSONArray();
+		standing_crates_now.addAll(standing_crates);
+		
+		/*for(int i=0; i<visited.length; i++)
 		{
-			if(!visited[i])
+			pos loc = posList.get(i);
+			System.out.println(visited[i] + "," + loc.i + "," + loc.j);
+			if((!visited[i]) && !((loc.i ==start.i) && (loc.j==start.j)))
 			{
-				JSONArray arr = new JSONArray();
-				pos loc = posList.get(i);
-				arr.add(loc.i);
-				arr.add(loc.j);
-				arr.add(board[loc.i][loc.j].height);
-				standing_crates.add(arr);
-				
+				if(board[loc.i][loc.j].height > 1)
+				{
+					JSONArray arr = new JSONArray();
+					arr.add(loc.i);
+					arr.add(loc.j);
+					arr.add(board[loc.i][loc.j].height);
+					standing_crates.add(arr);
+				}	
 			}
 			
-		}
-		obj.put("standing_crates", standing_crates);
+		}*/
+	
 		JSONArray toppled = new JSONArray();
 		
 		while(temp.prev!=null)
@@ -324,6 +333,20 @@ public class CratePuzzle {
 			System.out.println(temp.i + ", " + temp.j + ", " +  temp.direction);
 			JSONArray list = new JSONArray();
 			int start_row, start_column, end_row, end_column;
+			
+			int toremove= -1;
+			for(int i=0; i<standing_crates_now.size(); i++)
+			{
+				JSONArray st = (JSONArray)standing_crates_now.get(i);
+				if((Integer.parseInt(st.get(0).toString()) == temp.i) && (Integer.parseInt(st.get(1).toString()) == temp.j))
+				{
+					System.out.println(st.toJSONString());
+					toremove = i;
+					break;
+				}
+				
+			}
+			if(toremove >= 0) standing_crates_now.remove(toremove);
 			
 			start_row = temp.i;
 			start_column = temp.j;
@@ -350,10 +373,13 @@ public class CratePuzzle {
 			list.add(end_row);
 			list.add(end_column);
 			
+			
 			toppled.add(list);
 			temp = temp.prev;
 		}
 		
+		obj.put("standing_crates", standing_crates_now);
+		toppled.addAll(toppled_crates);
 		obj.put("toppled_crates", toppled);
 		outputArr.add(obj);
 		
@@ -416,7 +442,7 @@ public class CratePuzzle {
 	public static void main(String args[]) throws IOException
 	{
 		
-		String str = readFile("B:\\questions.json", Charset.defaultCharset());
+		String str = readFile("C:\\workspace2\\crate\\bin\\questions.json", Charset.defaultCharset());
 		System.out.println(str);
 		
 		Object obj=JSONValue.parse(str);
@@ -427,7 +453,7 @@ public class CratePuzzle {
 		for(int i=0; i<array.size(); i++)
 		{
 			JSONObject o = (JSONObject)array.get(i);
-			CratePuzzle cp = new CratePuzzle(o);
+			CratePuzzle cp = new CratePuzzle(o, "C:\\workspace2\\crate\\bin\\board" + i + "_solution.json");
 		}
 
 	}
