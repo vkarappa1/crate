@@ -437,7 +437,7 @@ public class CratePuzzle {
 	public static void main(String args[]) throws IOException
 	{
 		
-		String str = readFile("C:\\workspace2\\crate\\bin\\questions.json", Charset.defaultCharset());
+		String str = readFile("C:/workspace2/crate/bin/boards.json", Charset.defaultCharset());
 		System.out.println(str);
 		
 		Object obj=JSONValue.parse(str);
@@ -448,7 +448,7 @@ public class CratePuzzle {
 		for(int i=0; i<array.size(); i++)
 		{
 			JSONObject o = (JSONObject)array.get(i);
-			CratePuzzle cp = new CratePuzzle(o, "C:\\workspace2\\crate\\bin\\board" + i + "_solution.json");
+			CratePuzzle cp = new CratePuzzle(o, "C:/workspace2/crate/bin/board" + i + "_solution.json");
 		}
 
 	}
